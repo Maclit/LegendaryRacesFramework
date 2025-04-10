@@ -1,4 +1,3 @@
-// File path: Source/LegendaryRacesFramework/Core/Systems/LRF_GameComponent.cs
 using System;
 using System.Collections.Generic;
 using Verse;

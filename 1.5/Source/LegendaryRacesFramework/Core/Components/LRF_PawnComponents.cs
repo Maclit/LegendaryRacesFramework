@@ -1,4 +1,3 @@
-// File path: Source/LegendaryRacesFramework/Core/Components/LRF_PawnComponents.cs
 using System;
 using System.Collections.Generic;
 using System.Text;

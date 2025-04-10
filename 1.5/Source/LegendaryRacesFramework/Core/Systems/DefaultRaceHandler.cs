@@ -1,4 +1,3 @@
-// File path: Source/LegendaryRacesFramework/Core/Systems/DefaultRaceHandler.cs
 using System;
 using System.Collections.Generic;
 using RimWorld;

@@ -1,4 +1,3 @@
-// File path: Source/LegendaryRacesFramework/Core/Systems/DefaultResourceManager.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
