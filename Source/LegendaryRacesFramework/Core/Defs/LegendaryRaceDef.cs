@@ -217,6 +217,8 @@ namespace LegendaryRacesFramework
         public float effectRadius = 0f;
         public string targetingType = "SingleTarget";
         public string abilityClass;
+        public string category = "General";
+        public string soundDefName;
         
         public void ResolveReferences(LegendaryRaceDef parent)
         {
