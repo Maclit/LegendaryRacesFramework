@@ -1,0 +1,58 @@
+## RimWorld specific
+*.rw
+
+## Visual Studio / C# specific
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+*.exe
+*.manifest
+*.tmp
+*.log
+
+## Rider specific
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+## OS specific
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.directory
+.Trash-*
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+[Bb]in/
+[Oo]bj/
+
+## Backup files
+*.bak
+*.backup
+*~
