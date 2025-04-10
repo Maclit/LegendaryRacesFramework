@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace LegendaryRacesFramework
 {
+    [StaticConstructorOnStartup]
     public class LegendaryRacesFrameworkMod : Mod
     {
         private static Dictionary<string, Type> registeredRaceExtensions = new Dictionary<string, Type>();
@@ -17,6 +18,18 @@ namespace LegendaryRacesFramework
         
         private static Harmony harmony;
         public static LegendaryRacesFrameworkMod Instance { get; private set; }
+        
+        // Flag to track if components have been registered
+        private static bool componentsRegistered = false;
+
+        // Static constructor - use this ONLY for things that require all defs to be loaded
+        static LegendaryRacesFrameworkMod()
+        {
+            // Use LongEventHandler to ensure this runs at the right time
+            LongEventHandler.ExecuteWhenFinished(RegisterCompPropertiesDelayed);
+            
+            Log.Message("Legendary Races Framework: Static initialization complete");
+        }
         
         public LegendaryRacesFrameworkMod(ModContentPack content) : base(content)
         {
@@ -32,16 +45,13 @@ namespace LegendaryRacesFramework
             // Log startup information
             Log.Message("Legendary Races Framework initializing...");
             
-            // Register comp properties
-            RegisterCompProperties();
-            
             // Register default implementations
             RegisterDefaultImplementations();
             
-            // Check for VEF
-            if (!ModsConfig.IsActive("OskarPotocki.VanillaExpandedFramework"))
+            // Check for VEF (just a warning, not critical)
+            if (!ModsConfig.IsActive("OskarPotocki.VanillaFactionsExpanded.Core"))
             {
-                Log.Error("Legendary Races Framework requires Vanilla Expanded Framework (VEF) to function correctly. Please enable VEF.");
+                Log.Warning("Legendary Races Framework works best with Vanilla Expanded Framework (VEF). Some features may be limited without it.");
             }
             
             // Optional integrations
@@ -50,7 +60,7 @@ namespace LegendaryRacesFramework
             Log.Message("Legendary Races Framework initialized successfully!");
         }
         
-        // Add settings handling for RimWorld 1.5
+        // Add settings handling for RimWorld
         public override string SettingsCategory()
         {
             return "Legendary Races Framework";
@@ -62,28 +72,42 @@ namespace LegendaryRacesFramework
             base.DoSettingsWindowContents(inRect);
         }
         
-        private void RegisterCompProperties()
+        // This is called after all defs are loaded via LongEventHandler
+        private static void RegisterCompPropertiesDelayed()
         {
-            // Create comp properties instances
-            var legendaryRaceProps = new LegendaryRacesFramework.CompProperties_LegendaryRace();
-            var legendaryCharacterProps = new LegendaryRacesFramework.CompProperties_LegendaryRace();
+            if (componentsRegistered)
+                return;
+                
+            try {
+                // Find Human def using DefDatabase instead of ThingDefOf
+                ThingDef pawnDef = DefDatabase<ThingDef>.GetNamed("Human");
+                if (pawnDef == null) {
+                    Log.Error("Failed to find Human ThingDef when registering components.");
+                    return;
+                }
+                
+                // Create comp properties instances
+                var legendaryRaceProps = new CompProperties_LegendaryRace();
+                var legendaryCharacterProps = new CompProperties_LegendaryCharacter();
 
-            // Register ThingComp components for pawns
-            ThingDef pawnDef = ThingDef.Named("Human");
-            
-            // Add comp properties to pawn def if they don't already exist
-            if (!pawnDef.comps.Any(c => c is LegendaryRacesFramework.CompProperties_LegendaryRace))
-            {
-                pawnDef.comps.Add(legendaryRaceProps);
+                // Add comp properties to pawn def if they don't already exist
+                if (!pawnDef.comps.Any(c => c is CompProperties_LegendaryRace))
+                {
+                    pawnDef.comps.Add(legendaryRaceProps);
+                }
+                
+                if (!pawnDef.comps.Any(c => c is CompProperties_LegendaryCharacter))
+                {
+                    pawnDef.comps.Add(legendaryCharacterProps);
+                }
+                
+                // Log component registration
+                Log.Message("Legendary Races Framework: Registered pawn components");
+                componentsRegistered = true;
             }
-            
-            if (!pawnDef.comps.Any(c => c is LegendaryRacesFramework.CompProperties_LegendaryRace))
-            {
-                pawnDef.comps.Add(legendaryCharacterProps);
+            catch (Exception ex) {
+                Log.Error($"Error registering comp properties: {ex}");
             }
-            
-            // Log component registration
-            Log.Message("Legendary Races Framework: Registered pawn components");
         }
         
         private void RegisterDefaultImplementations()

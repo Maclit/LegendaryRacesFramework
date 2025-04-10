@@ -3,10 +3,11 @@
   <!-- Base Legendary Race Definition -->
   <LRF.LegendaryRaceDef Abstract="True" Name="LegendaryRaceBase">
     <!-- Basic Race Information -->
-    <defName>LegendaryRaceTemplate</defName>
+    <defName>LegendaryRaceBase</defName> <!-- IMPORTANT: Make sure defName matches the Name attribute -->
     <label>legendary race</label>
     <description>A legendary race template.</description>
     
+    <!-- Rest of the definition remains the same -->
     <!-- Core Properties -->
     <raceProperties>
       <raceName>Race Name</raceName>

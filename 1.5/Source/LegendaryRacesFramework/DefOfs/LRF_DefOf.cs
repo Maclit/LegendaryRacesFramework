@@ -6,11 +6,8 @@ namespace LegendaryRacesFramework
     [DefOf]
     public static class LRF_DefOf
     {
-        // Reference to the base legendary race def
-        public static LegendaryRaceDef LegendaryRaceBase;
-        
-        // Reference to the base legendary character def
-        public static LegendaryCharacterDef LegendaryCharacterBase;
+        // Removing references to any DefOf in static initialization
+        // We'll use DefDatabase.GetNamed() to find defs instead
         
         static LRF_DefOf()
         {

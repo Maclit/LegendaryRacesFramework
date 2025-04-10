@@ -3,7 +3,7 @@
   <!-- Base Legendary Character Definition -->
   <LRF.LegendaryCharacterDef Abstract="True" Name="LegendaryCharacterBase">
     <!-- Basic Character Information -->
-    <defName>LegendaryCharacterTemplate</defName>
+    <defName>LegendaryCharacterBase</defName> <!-- IMPORTANT: Make sure defName matches the Name attribute -->
     <label>legendary character</label>
     <description>A legendary character template.</description>
     
