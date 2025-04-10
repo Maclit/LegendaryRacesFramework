@@ -6,13 +6,6 @@ using RimWorld;
 
 namespace LegendaryRacesFramework
 {
-    // Definition class for legendary races
-    public class LegendaryRaceDef : Def
-    {
-        // This class is already defined in LegendaryRaceDef.cs
-        // but needs to be referenced in DefOf class, so we include it here
-    }
-
     // Def reference class for ThingDef with count
     public class ThingDefCount
     {

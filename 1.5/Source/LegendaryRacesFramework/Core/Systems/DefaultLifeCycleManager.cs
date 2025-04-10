@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 using UnityEngine;
 
@@ -92,7 +93,7 @@ namespace LegendaryRacesFramework
             }
             
             // Add player-faction world pawns if any
-            pawnsToCheck.AddRange(Find.WorldPawns.AllWorldPawns.Where(p => 
+            pawnsToCheck.AddRange(Find.WorldPawns.AllPawnsAlive.Where(p => 
                 p.Faction != null && p.Faction.IsPlayer && p.IsFreeColonist));
             
             // Process each pawn

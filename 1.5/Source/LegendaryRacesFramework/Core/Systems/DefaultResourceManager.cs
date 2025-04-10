@@ -124,7 +124,7 @@ namespace LegendaryRacesFramework
             }
             
             // Find pawn by ID in world pawns
-            Pawn worldPawn = Find.WorldPawns.AllWorldPawns.FirstOrDefault(p => p.thingIDNumber == pawnID);
+            Pawn worldPawn = Find.WorldPawns.AllPawnsAlive.FirstOrDefault(p => p.thingIDNumber == pawnID);
             if (worldPawn != null)
                 return worldPawn;
             

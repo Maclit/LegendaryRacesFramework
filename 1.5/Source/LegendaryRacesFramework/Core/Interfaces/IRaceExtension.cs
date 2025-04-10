@@ -1,8 +1,9 @@
+
 using System;
 using System.Collections.Generic;
 using RimWorld;
 using Verse;
-using VFECore;
+using RimWorld.Planet; // Added for World type
 
 namespace LegendaryRacesFramework
 {
