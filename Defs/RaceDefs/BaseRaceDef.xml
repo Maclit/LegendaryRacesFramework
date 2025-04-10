@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Base Legendary Race Definition -->
+  <LRF.LegendaryRaceDef Abstract="True" Name="LegendaryRaceBase">
+    <!-- Basic Race Information -->
+    <defName>LegendaryRaceTemplate</defName>
+    <label>legendary race</label>
+    <description>A legendary race template.</description>
+    
+    <!-- Core Properties -->
+    <raceProperties>
+      <raceName>Race Name</raceName>
+      <raceDescription>Detailed description of the race, its origins, and notable features.</raceDescription>
+      <raceIcon>UI/Races/RaceIcon</raceIcon>
+      
+      <!-- Associated Gene Definition -->
+      <coreGeneDef>RaceCoreGene</coreGeneDef>
+      <secondaryGeneDefs>
+        <li>RaceSecondaryGene1</li>
+        <li>RaceSecondaryGene2</li>
+      </secondaryGeneDefs>
+      
+      <!-- Life Cycle -->
+      <lifeSpanYears>120</lifeSpanYears>
+      <maxLifeSpanYears>160</maxLifeSpanYears>
+      <lifeStages>
+        <li>
+          <stageID>Child</stageID>
+          <stageName>Child</stageName>
+          <minAgeYears>0</minAgeYears>
+          <maxAgeYears>12</maxAgeYears>
+          <bodySizeFactor>0.6</bodySizeFactor>
+          <healthScaleFactor>0.7</healthScaleFactor>
+          <resourceGainFactor>0.6</resourceGainFactor>
+          <abilitiesUnlocked>false</abilitiesUnlocked>
+          <stageHediffs>
+            <li>RaceChildHediff</li>
+          </stageHediffs>
+          <statFactors>
+            <li>
+              <statDef>MoveSpeed</statDef>
+              <value>0.85</value>
+            </li>
+          </statFactors>
+        </li>
+        <li>
+          <stageID>Adult</stageID>
+          <stageName>Adult</stageName>
+          <minAgeYears>12</minAgeYears>
+          <maxAgeYears>60</maxAgeYears>
+          <bodySizeFactor>1.0</bodySizeFactor>
+          <healthScaleFactor>1.0</healthScaleFactor>
+          <resourceGainFactor>1.0</resourceGainFactor>
+          <abilitiesUnlocked>true</abilitiesUnlocked>
+          <stageHediffs>
+            <li>RaceAdultHediff</li>
+          </stageHediffs>
+        </li>
+        <li>
+          <stageID>Elder</stageID>
+          <stageName>Elder</stageName>
+          <minAgeYears>60</minAgeYears>
+          <maxAgeYears>160</maxAgeYears>
+          <bodySizeFactor>0.95</bodySizeFactor>
+          <healthScaleFactor>0.9</healthScaleFactor>
+          <resourceGainFactor>0.8</resourceGainFactor>
+          <abilitiesUnlocked>true</abilitiesUnlocked>
+          <stageHediffs>
+            <li>RaceElderHediff</li>
+          </stageHediffs>
+          <statFactors>
+            <li>
+              <statDef>MoveSpeed</statDef>
+              <value>0.9</value>
+            </li>
+            <li>
+              <statDef>PsychicSensitivity</statDef>
+              <value>1.25</value>
+            </li>
+          </statFactors>
+        </li>
+      </lifeStages>
+    </raceProperties>
+    
+    <!-- Race Resources -->
+    <raceResources>
+      <li>
+        <resourceID>PrimaryResource</resourceID>
+        <resourceName>Primary Resource</resourceName>
+        <resourceDescription>Description of the primary resource.</resourceDescription>
+        <minValue>0</minValue>
+        <maxValue>100</maxValue>
+        <defaultValue>50</defaultValue>
+        <isVisible>true</isVisible>
+        <regenerationRate>2.0</regenerationRate>
+        <iconPath>UI/Resources/PrimaryResource</iconPath>
+        <category>Power</category>
+        <resourceLevelHediffs>
+          <li>
+            <level>20</level>
+            <hediff>ResourceLowHediff</hediff>
+          </li>
+          <li>
+            <level>80</level>
+            <hediff>ResourceHighHediff</hediff>
+          </li>
+        </resourceLevelHediffs>
+      </li>
+    </raceResources>
+    
+    <!-- Race Abilities -->
+    <raceAbilities>
+      <li>
+        <abilityID>RaceAbility1</abilityID>
+        <abilityName>Race Ability Name</abilityName>
+        <abilityDescription>Description of the race ability.</abilityDescription>
+        <iconPath>UI/Abilities/RaceAbility1</iconPath>
+        <cooldownTicks>60000</cooldownTicks>
+        <isPassive>false</isPassive>
+        <resourceCosts>
+          <li>
+            <resourceID>PrimaryResource</resourceID>
+            <cost>25</cost>
+          </li>
+        </resourceCosts>
+        <statRequirements>
+          <li>
+            <statDef>PsychicSensitivity</statDef>
+            <value>0.8</value>
+          </li>
+        </statRequirements>
+        <hediffsApplied>
+          <li>AbilityHediff</li>
+        </hediffsApplied>
+        <effectRadius>3.0</effectRadius>
+        <targetingType>SingleTarget</targetingType>
+        <abilityClass>LRF.Abilities.RaceSpecificAbility</abilityClass>
+      </li>
+    </raceAbilities>
+    
+    <!-- Special Racial Mechanics -->
+    <specialMechanics>
+      <!-- Environment interactions -->
+      <environmentalAdaptations>
+        <li>
+          <environmentType>Aquatic</environmentType>
+          <statModifications>
+            <li>
+              <statDef>MoveSpeed</statDef>
+              <factor>1.2</factor>
+            </li>
+          </statModifications>
+          <needModifications>
+            <li>
+              <needDef>Food</needDef>
+              <factor>0.8</factor>
+            </li>
+          </needModifications>
+        </li>
+      </environmentalAdaptations>
+      
+      <!-- Special needs -->
+      <specialNeeds>
+        <li>
+          <needID>SpecialNeed</needID>
+          <needName>Special Need</needName>
+          <needDescription>Description of the special need.</needDescription>
+          <minLevel>0</minLevel>
+          <maxLevel>100</maxLevel>
+          <defaultLevel>60</defaultLevel>
+          <fallRate>0.22</fallRate>
+          <criticalThreshold>15</criticalThreshold>
+          <iconPath>UI/Needs/SpecialNeed</iconPath>
+          <criticalHediff>SpecialNeedCriticalHediff</criticalHediff>
+        </li>
+      </specialNeeds>
+      
+      <!-- Unique interactions -->
+      <uniqueInteractions>
+        <li>
+          <interactionID>RaceInteraction1</interactionID>
+          <interactionName>Race Interaction</interactionName>
+          <interactionDescription>Description of the interaction.</interactionDescription>
+          <targetsAllowed>
+            <li>Pawn</li>
+            <li>Thing</li>
+          </targetsAllowed>
+          <interactionClass>LRF.Interactions.RaceSpecificInteraction</interactionClass>
+        </li>
+      </uniqueInteractions>
+    </specialMechanics>
+    
+    <!-- VEF Integration -->
+    <vefIntegration>
+      <isUsingVEF>true</isUsingVEF>
+      <vefGeneExtension>
+        <backgroundPathEndogenes>UI/Genes/RaceGene</backgroundPathEndogenes>
+        <hediffToWholeBody>RaceEssence</hediffToWholeBody>
+        <customBloodThingDef>RaceBlood</customBloodThingDef>
+        <customBloodIcon>UI/Icons/RaceBlood</customBloodIcon>
+        <diseaseProgressionFactor>0.75</diseaseProgressionFactor>
+        <pregnancySpeedFactor>1.2</pregnancySpeedFactor>
+      </vefGeneExtension>
+      <conditionalStatModifiers>
+        <li>
+          <conditionType>Water</conditionType>
+          <statFactors>
+            <li>
+              <statDef>MoveSpeed</statDef>
+              <value>1.5</value>
+            </li>
+          </statFactors>
+        </li>
+        <li>
+          <conditionType>Darkness</conditionType>
+          <statFactors>
+            <li>
+              <statDef>MoveSpeed</statDef>
+              <value>1.25</value>
+            </li>
+          </statFactors>
+          <statOffsets>
+            <li>
+              <statDef>NightVisionEfficiency</statDef>
+              <value>0.3</value>
+            </li>
+          </statOffsets>
+        </li>
+      </conditionalStatModifiers>
+    </vefIntegration>
+    
+    <!-- HAR Integration (Optional) -->
+    <harIntegration>
+      <isUsingHAR>true</isUsingHAR>
+      <bodyTypes>
+        <li>RaceBodyType1</li>
+        <li>RaceBodyType2</li>
+      </bodyTypes>
+      <fallbackBodyType>Thin</fallbackBodyType>
+      <customDrawSize>(1.0, 1.0)</customDrawSize>
+      <alienPartGenerator>
+        <!-- HAR body configuration -->
+      </alienPartGenerator>
+    </harIntegration>
+    
+    <!-- CE Integration (Optional) -->
+    <ceIntegration>
+      <isUsingCE>true</isUsingCE>
+      <ceStats>
+        <li>
+          <statName>ArmorRating_Sharp</statName>
+          <value>0.15</value>
+        </li>
+        <li>
+          <statName>CarryWeight</statName>
+          <value>35</value>
+        </li>
+        <li>
+          <statName>CarryBulk</statName>
+          <value>15</value>
+        </li>
+      </ceStats>
+    </ceIntegration>
+    
+    <!-- Balance Settings -->
+    <balanceSettings>
+      <powerLevel>3</powerLevel> <!-- 1-5 scale -->
+      <resourceMultiplier>1.0</resourceMultiplier>
+      <abilityPowerMultiplier>1.0</abilityPowerMultiplier>
+      <difficultyScaling>true</difficultyScaling>
+    </balanceSettings>
+    
+    <!-- Performance Settings -->
+    <performanceSettings>
+      <usePerformanceMonitoring>true</usePerformanceMonitoring>
+      <resourceUpdateInterval>250</resourceUpdateInterval> <!-- Ticks -->
+      <abilityCheckInterval>60</abilityCheckInterval> <!-- Ticks -->
+      <environmentalCheckInterval>250</environmentalCheckInterval> <!-- Ticks -->
+    </performanceSettings>
+  </LRF.LegendaryRaceDef>
+</Defs>

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Base Legendary Character Definition -->
+  <LRF.LegendaryCharacterDef Abstract="True" Name="LegendaryCharacterBase">
+    <!-- Basic Character Information -->
+    <defName>LegendaryCharacterTemplate</defName>
+    <label>legendary character</label>
+    <description>A legendary character template.</description>
+    
+    <!-- Core Properties -->
+    <characterProperties>
+      <characterID>CharID</characterID>
+      <characterName>Character Name</characterName>
+      <backstory>Detailed backstory of the legendary character, their origins, and notable achievements.</backstory>
+      <portraitPath>Textures/Characters/CharacterPortrait</portraitPath>
+      <raceID>LegendaryRaceTemplate</raceID>
+      <birthDateRelative>-4500</birthDateRelative> <!-- Negative number of days from game start -->
+      <gender>Male</gender> <!-- Male, Female, None -->
+      <faction>RaceFaction</faction> <!-- Optional, for non-playable characters -->
+    </characterProperties>
+    
+    <!-- Character Traits -->
+    <traitProperties>
+      <forcedTraits>
+        <li>
+          <def>TraitDef1</def>
+          <degree>1</degree>
+          <chance>100</chance>
+        </li>
+        <li>
+          <def>TraitDef2</def>
+          <degree>2</degree>
+          <chance>100</chance>
+        </li>
+      </forcedTraits>
+      <disallowedTraits>
+        <li>
+          <def>TraitDef3</def>
+        </li>
+      </disallowedTraits>
+      <skillSettings>
+        <li>
+          <def>Shooting</def>
+          <value>12</value>
+          <passion>Major</passion>
+        </li>
+        <li>
+          <def>Melee</def>
+          <value>15</value>
+          <passion>Major</passion>
+        </li>
+        <li>
+          <def>Intellectual</def>
+          <value>8</value>
+          <passion>Minor</passion>
+        </li>
+      </skillSettings>
+    </traitProperties>
+    
+    <!-- Special Abilities -->
+    <uniqueAbilities>
+      <li>
+        <abilityID>LegendaryAbility1</abilityID>
+        <abilityName>Legendary Ability Name</abilityName>
+        <abilityDescription>Description of the legendary ability.</abilityDescription>
+        <iconPath>UI/Abilities/LegendaryAbility1</iconPath>
+        <cooldownTicks>60000</cooldownTicks>
+        <isPassive>false</isPassive>
+        <resourceCosts>
+          <li>
+            <resourceID>PrimaryResource</resourceID>
+            <cost>15</cost>
+          </li>
+        </resourceCosts>
+        <statRequirements>
+          <li>
+            <statDef>PsychicSensitivity</statDef>
+            <value>0.5</value>
+          </li>
+        </statRequirements>
+        <hediffsApplied>
+          <li>LegendaryAbilityHediff</li>
+        </hediffsApplied>
+        <effectRadius>5.0</effectRadius>
+        <targetingType>MultiTarget</targetingType>
+        <abilityClass>LRF.Abilities.LegendarySpecificAbility</abilityClass>
+      </li>
+    </uniqueAbilities>
+    
+    <!-- Enhanced Race Mechanics -->
+    <enhancedMechanics>
+      <li>
+        <mechanicID>EnhancedMechanic1</mechanicID>
+        <baseMechanicID>RaceMechanic1</baseMechanicID>
+        <powerScalingFactor>2.0</powerScalingFactor>
+        <enhancementDescription>Description of how this mechanic is enhanced for the legendary character.</enhancementDescription>
+        <statModifications>
+          <li>
+            <statDef>MoveSpeed</statDef>
+            <value>1.5</value>
+          </li>
+          <li>
+            <statDef>PsychicSensitivity</statDef>
+            <value>1.75</value>
+          </li>
+        </statModifications>
+        <abilityModifications>
+          <li>
+            <abilityID>RaceAbility1</abilityID>
+            <powerMultiplier>1.5</powerMultiplier>
+            <cooldownFactor>0.7</cooldownFactor>
+            <resourceCostFactor>0.8</resourceCostFactor>
+          </li>
+        </abilityModifications>
+      </li>
+    </enhancedMechanics>
+    
+    <!-- Unique Equipment -->
+    <uniqueEquipment>
+      <li>
+        <thingDef>LegendaryWeapon</thingDef>
+        <count>1</count>
+        <quality>Legendary</quality>
+      </li>
+      <li>
+        <thingDef>LegendaryApparel</thingDef>
+        <count>1</count>
+        <quality>Excellent</quality>
+      </li>
+    </uniqueEquipment>
+    
+    <!-- Special Hediffs -->
+    <uniqueHediffs>
+      <li>
+        <hediffDef>LegendaryHediff</hediffDef>
+        <severity>1.0</severity>
+        <bodyPartLabel>Brain</bodyPartLabel>
+      </li>
+      <li>
+        <hediffDef>LegendaryHediff2</hediffDef>
+        <severity>0.8</severity>
+      </li>
+    </uniqueHediffs>
+    
+    <!-- Origin Scenario -->
+    <originScenario>
+      <scenarioID>LegendaryOrigin1</scenarioID>
+      <scenarioName>Legendary Origin</scenarioName>
+      <scenarioDescription>Description of the legendary character's origin scenario.</scenarioDescription>
+      <startingPawns>1</startingPawns>
+      <forcedStartingCharacter>true</forcedStartingCharacter>
+      <startWithCharacter>true</startWithCharacter>
+      <additionalStartingItems>
+        <li>
+          <thingDef>Silver</thingDef>
+          <count>500</count>
+        </li>
+        <li>
+          <thingDef>MealSurvivalPack</thingDef>
+          <count>10</count>
+        </li>
+        <li>
+          <thingDef>Medicine</thingDef>
+          <count>15</count>
+        </li>
+      </additionalStartingItems>
+      <specialScenParts>
+        <li>
+          <def>GameStartDialog</def>
+          <text>The legendary [PAWN_nameDef] begins a new journey...</text>
+          <closeSound>GameStartSting</closeSound>
+        </li>
+        <li>
+          <def>StartingThing_Defined</def>
+          <thingDef>LegendaryArtifact</thingDef>
+          <count>1</count>
+        </li>
+      </specialScenParts>
+      <preferredStartingBiome>TemperateForest</preferredStartingBiome>
+    </originScenario>
+    
+    <!-- Story Elements -->
+    <storyElements>
+      <li>
+        <elementID>StoryElement1</elementID>
+        <elementName>Story Element Name</elementName>
+        <elementDescription>Description of the story element.</elementDescription>
+        <triggerConditions>
+          <li>ColonyAgeDays > 10</li>
+          <li>CharacterPresent</li>
+        </triggerConditions>
+        <consequenceOptions>
+          <li>
+            <optionText>Option 1</optionText>
+            <consequenceDescription>Description of what happens.</consequenceDescription>
+            <consequenceClass>LRF.StoryElements.LegendaryStoryConsequence</consequenceClass>
+          </li>
+          <li>
+            <optionText>Option 2</optionText>
+            <consequenceDescription>Description of the alternative.</consequenceDescription>
+            <consequenceClass>LRF.StoryElements.LegendaryStoryConsequence</consequenceClass>
+          </li>
+        </consequenceOptions>
+      </li>
+    </storyElements>
+    
+    <!-- Progression Path -->
+    <progressionPath>
+      <pathID>ProgressionPath1</pathID>
+      <pathName>Path Name</pathName>
+      <pathDescription>Description of the progression path.</pathDescription>
+      <stages>
+        <li>
+          <stageID>Stage1</stageID>
+          <stageName>Stage Name</stageName>
+          <stageDescription>Description of the stage.</stageDescription>
+          <requirements>
+            <li>ColonyAgeDays > 30</li>
+            <li>CompletedResearch > 5</li>
+          </requirements>
+          <rewards>
+            <li>
+              <rewardType>Ability</rewardType>
+              <rewardID>NewAbility1</rewardID>
+            </li>
+            <li>
+              <rewardType>StatBoost</rewardType>
+              <rewardID>MoveSpeed</rewardID>
+              <value>1.1</value>
+            </li>
+          </rewards>
+          <questClass>LRF.Quests.LegendaryProgressionQuest</questClass>
+        </li>
+      </stages>
+    </progressionPath>
+    
+    <!-- Special Relationships -->
+    <specialRelationships>
+      <li>
+        <relationshipID>Rivalry1</relationshipID>
+        <relationshipType>Rivalry</relationshipType>
+        <targetCharacterID>OtherLegendaryCharacter</targetCharacterID>
+        <relationshipDescription>Description of the rivalry.</relationshipDescription>
+        <initialOpinion>-50</initialOpinion>
+        <specialInteractions>
+          <li>RivalDuel</li>
+          <li>RivalInsult</li>
+        </specialInteractions>
+      </li>
+      <li>
+        <relationshipID>Alliance1</relationshipID>
+        <relationshipType>Alliance</relationshipType>
+        <targetCharacterID>AllyLegendaryCharacter</targetCharacterID>
+        <relationshipDescription>Description of the alliance.</relationshipDescription>
+        <initialOpinion>75</initialOpinion>
+        <specialInteractions>
+          <li>AllyBoost</li>
+          <li>AllyGift</li>
+        </specialInteractions>
+      </li>
+    </specialRelationships>
+  </LRF.LegendaryCharacterDef>
+</Defs>
