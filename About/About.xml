@@ -3,7 +3,7 @@
 	<name>Legendary Races Framework</name>
 	<author>Julien Castillejos</author>
 	<supportedVersions>
-		<li>1.4</li>
+		<li>1.5</li>
 	</supportedVersions>
 	<packageId>JulienCastillejos.LegendaryRacesFramework</packageId>
 	<description>A unified foundation for creating complex, legendary race mods for RimWorld that extend beyond standard race implementations. The framework enables modders to create race mods with unique mechanics, buildings, abilities, and gameplay elements while maintaining consistency and compatibility.</description>
@@ -12,6 +12,7 @@
 		<li>Ludeon.RimWorld.Royalty</li>
 		<li>Ludeon.RimWorld.Ideology</li>
 		<li>Ludeon.RimWorld.Biotech</li>
+		<li>Ludeon.RimWorld.Anomaly</li>
 	</loadAfter>
 	<requiredMods>
 		<li>brrainz.harmony</li>
