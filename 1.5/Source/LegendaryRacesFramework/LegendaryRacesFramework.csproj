@@ -1,35 +1,51 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <LangVersion>8.0</LangVersion>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <AssemblyName>LRF</AssemblyName>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net48</TargetFramework> <!-- Ensure this matches the original framework version -->
     <RootNamespace>LegendaryRacesFramework</RootNamespace>
-    <OutputPath>..\..\Assemblies\</OutputPath>
+    <AssemblyName>LRF</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath> <!-- Prevent appending target framework to the output path -->
   </PropertyGroup>
-  
+
+  <!-- Debug configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Assemblies\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>none</DebugType> <!-- Set to 'none' to exclude debug info -->
+  </PropertyGroup>
+
+  <!-- Release configuration -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Assemblies\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DebugType>none</DebugType> <!-- Set to 'none' to exclude debug info -->
+  </PropertyGroup>
+ 
   <ItemGroup>
-      <!-- RimWorld Assembly References -->
-      <Reference Include="Assembly-CSharp">
-        <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
-        <Private>False</Private>
-      </Reference>
-      <Reference Include="UnityEngine.CoreModule">
-        <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-        <Private>False</Private>
-      </Reference>
-      <Reference Include="UnityEngine.IMGUIModule">
-        <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
-        <Private>False</Private>
-      </Reference>
-      <Reference Include="UnityEngine.TextRenderingModule">
-        <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
-        <Private>False</Private>
-      </Reference>
-      <!-- Harmony Reference -->
-      <Reference Include="0Harmony">
-        <HintPath>..\..\..\..\Mods\Harmony\Current\Assemblies\0Harmony.dll</HintPath>
-        <Private>False</Private>
-      </Reference>
+    <PackageReference Include="Krafs.Publicizer" Version="2.*" PrivateAssets="all">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.5.*" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <Reference Include="VFECore">
+      <HintPath>..\..\..\..\VanillaExpandedFramework\1.5\Assemblies\VFECore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="GraphicCustomization">
+      <HintPath>..\..\..\..\VanillaExpandedFramework\1.5\Assemblies\GraphicCustomization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="KCSG">
+      <HintPath>..\..\..\..\VanillaExpandedFramework\1.5\Assemblies\KCSG.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 </Project>
