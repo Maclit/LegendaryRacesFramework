@@ -64,12 +64,26 @@ namespace LegendaryRacesFramework
         
         private void RegisterCompProperties()
         {
-            var legendaryRaceProps = new CompProperties_LegendaryRace();
-            var legendaryCharacterProps = new CompProperties_LegendaryCharacter();
+            // Create comp properties instances
+            var legendaryRaceProps = new LegendaryRacesFramework.CompProperties_LegendaryRace();
+            var legendaryCharacterProps = new LegendaryRacesFramework.CompProperties_LegendaryRace();
 
-            // Register the CompProperties properly
-            DefGenerator.AddImpliedDef<CompProperties>(legendaryRaceProps);
-            DefGenerator.AddImpliedDef<CompProperties>(legendaryCharacterProps);
+            // Register ThingComp components for pawns
+            ThingDef pawnDef = ThingDef.Named("Human");
+            
+            // Add comp properties to pawn def if they don't already exist
+            if (!pawnDef.comps.Any(c => c is LegendaryRacesFramework.CompProperties_LegendaryRace))
+            {
+                pawnDef.comps.Add(legendaryRaceProps);
+            }
+            
+            if (!pawnDef.comps.Any(c => c is LegendaryRacesFramework.CompProperties_LegendaryRace))
+            {
+                pawnDef.comps.Add(legendaryCharacterProps);
+            }
+            
+            // Log component registration
+            Log.Message("Legendary Races Framework: Registered pawn components");
         }
         
         private void RegisterDefaultImplementations()

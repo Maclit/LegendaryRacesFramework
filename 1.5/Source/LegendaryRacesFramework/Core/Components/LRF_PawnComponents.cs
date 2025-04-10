@@ -113,14 +113,17 @@ namespace LegendaryRacesFramework
             // For abilities requiring a target
             if (ability.TargetingType != TargetingType.Self)
             {
-                Find.Targeter.BeginTargeting(new TargetingParameters
+                // Create a custom targeting source
+                TargetingParameters targetParams = new TargetingParameters
                 {
                     canTargetPawns = true,
                     canTargetBuildings = ability.TargetingType.HasFlag(TargetingType.Buildings),
                     canTargetItems = ability.TargetingType.HasFlag(TargetingType.Items),
                     canTargetLocations = ability.TargetingType.HasFlag(TargetingType.Locations)
-                }, 
-                delegate(LocalTargetInfo target) 
+                };
+                
+                // Define action when target is selected
+                Action<LocalTargetInfo> targetingAction = delegate(LocalTargetInfo target)
                 {
                     // Once target is selected, use the ability
                     if (ability.UseAbility(pawn, target))
@@ -131,9 +134,10 @@ namespace LegendaryRacesFramework
                             pawn,
                             MessageTypeDefOf.PositiveEvent);
                     }
-                }, 
-                null, // Mouse attachment texture 
-                true); // Play sound
+                };
+                
+                // Use the new RimWorld 1.5 targeting system
+                Find.Targeter.BeginTargeting(targetParams, targetingAction, pawn);
             }
             else
             {
@@ -320,14 +324,17 @@ namespace LegendaryRacesFramework
             // For abilities requiring a target
             if (ability.TargetingType != TargetingType.Self)
             {
-                Find.Targeter.BeginTargeting(new TargetingParameters
+                // Create a custom targeting source
+                TargetingParameters targetParams = new TargetingParameters
                 {
                     canTargetPawns = true,
                     canTargetBuildings = ability.TargetingType.HasFlag(TargetingType.Buildings),
                     canTargetItems = ability.TargetingType.HasFlag(TargetingType.Items),
                     canTargetLocations = ability.TargetingType.HasFlag(TargetingType.Locations)
-                }, 
-                delegate(LocalTargetInfo target) 
+                };
+                
+                // Define action when target is selected
+                Action<LocalTargetInfo> targetingAction = delegate(LocalTargetInfo target)
                 {
                     // Once target is selected, use the ability
                     if (ability.UseAbility(pawn, target))
@@ -338,9 +345,10 @@ namespace LegendaryRacesFramework
                             pawn,
                             MessageTypeDefOf.PositiveEvent);
                     }
-                }, 
-                null, // Mouse attachment texture 
-                true); // Play sound
+                };
+                
+                // Use the new RimWorld 1.5 targeting system
+                Find.Targeter.BeginTargeting(targetParams, targetingAction, pawn);
             }
             else
             {
@@ -356,7 +364,7 @@ namespace LegendaryRacesFramework
             }
         }
     }
-    
+
     /// <summary>
     /// Component properties for legendary race component
     /// </summary>
@@ -392,9 +400,9 @@ namespace LegendaryRacesFramework
         Items = 8,
         Locations = 16,
         
-        // Combinations
-        SingleTarget = Pawns | Buildings | Items,
-        MultiTarget = Pawns | Buildings | Items | Locations,
-        AoE = Locations | Pawns | Buildings | Items
+        // Combinations - ensure these have unique values
+        SingleTarget = Pawns | Buildings | Items,          // Value: 14
+        MultiTarget = Pawns | Buildings | Items | Locations, // Value: 30 
+        AoE = 32 | Locations | Pawns | Buildings | Items   // Change to 62 (32+30) to avoid duplicate with MultiTarget
     }
 }

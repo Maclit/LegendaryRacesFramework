@@ -275,35 +275,33 @@ namespace LegendaryRacesFramework
                 // Determine targets based on targeting type
                 List<Pawn> targets = new List<Pawn>();
                 
-                switch (TargetingType)
+                // Use if-else instead of switch to avoid issues with [Flags] enum values
+                if (TargetingType == TargetingType.Self)
                 {
-                    case TargetingType.Self:
-                        targets.Add(pawn);
-                        break;
+                    targets.Add(pawn);
+                }
+                else if (TargetingType == TargetingType.SingleTarget)
+                {
+                    if (target.Thing is Pawn targetPawn)
+                    {
+                        targets.Add(targetPawn);
+                    }
+                }
+                else if (TargetingType == TargetingType.MultiTarget || TargetingType == TargetingType.AoE)
+                {
+                    if (abilityDef.effectRadius > 0f && target.Cell.IsValid && pawn.Map != null)
+                    {
+                        IEnumerable<Thing> thingsInRange = GenRadial.RadialDistinctThingsAround(
+                            target.Cell, pawn.Map, abilityDef.effectRadius, true);
                         
-                    case TargetingType.SingleTarget:
-                        if (target.Thing is Pawn targetPawn)
+                        foreach (Thing thing in thingsInRange)
                         {
-                            targets.Add(targetPawn);
-                        }
-                        break;
-                        
-                    case TargetingType.MultiTarget:
-                    case TargetingType.AoE:
-                        if (abilityDef.effectRadius > 0f && target.Cell.IsValid && pawn.Map != null)
-                        {
-                            IEnumerable<Thing> thingsInRange = GenRadial.RadialDistinctThingsAround(
-                                target.Cell, pawn.Map, abilityDef.effectRadius, true);
-                            
-                            foreach (Thing thing in thingsInRange)
+                            if (thing is Pawn targetPawnInRange)
                             {
-                                if (thing is Pawn targetPawnInRange)
-                                {
-                                    targets.Add(targetPawnInRange);
-                                }
+                                targets.Add(targetPawnInRange);
                             }
                         }
-                        break;
+                    }
                 }
                 
                 // Apply hediffs to targets
