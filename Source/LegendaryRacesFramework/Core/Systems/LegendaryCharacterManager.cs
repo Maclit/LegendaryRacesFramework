@@ -1,18 +1,26 @@
+// File path: Source/LegendaryRacesFramework/Core/Systems/LegendaryCharacterManager.cs
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using UnityEngine;
 
 namespace LegendaryRacesFramework
 {
     public static class LegendaryCharacterManager
     {
         private static Dictionary<string, List<ILegendaryCharacter>> legendaryCharactersByRace = new Dictionary<string, List<ILegendaryCharacter>>();
+        private static Dictionary<string, ILegendaryCharacter> legendaryCharactersById = new Dictionary<string, ILegendaryCharacter>();
+        
+        // RimWorld 1.5 cached references
+        private static Dictionary<int, string> pawnCharacterIdCache = new Dictionary<int, string>();
         
         public static void Initialize()
         {
             legendaryCharactersByRace.Clear();
+            legendaryCharactersById.Clear();
+            pawnCharacterIdCache.Clear();
             
             // Load all legendary character defs
             foreach (LegendaryCharacterDef charDef in DefDatabase<LegendaryCharacterDef>.AllDefs)
@@ -35,7 +43,13 @@ namespace LegendaryRacesFramework
                         
                         raceCharacters.Add(character);
                         
-                        Log.Message($"Loaded legendary character: {character.CharacterName} for race {raceID}");
+                        // Add to ID lookup
+                        legendaryCharactersById[character.CharacterID] = character;
+                        
+                        if (LegendaryRacesFrameworkMod.Settings.showDebugLogs)
+                        {
+                            Log.Message($"Loaded legendary character: {character.CharacterName} for race {raceID}");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -57,13 +71,13 @@ namespace LegendaryRacesFramework
         
         public static ILegendaryCharacter GetLegendaryCharacter(string characterID)
         {
-            foreach (var characters in legendaryCharactersByRace.Values)
+            if (string.IsNullOrEmpty(characterID))
+                return null;
+                
+            // Use direct lookup for performance in RimWorld 1.5
+            if (legendaryCharactersById.TryGetValue(characterID, out ILegendaryCharacter character))
             {
-                ILegendaryCharacter character = characters.FirstOrDefault(c => c.CharacterID == characterID);
-                if (character != null)
-                {
-                    return character;
-                }
+                return character;
             }
             
             return null;
@@ -73,22 +87,49 @@ namespace LegendaryRacesFramework
         {
             if (pawn == null) return false;
             
+            int pawnId = pawn.thingIDNumber;
+            
+            // Check cache first
+            if (pawnCharacterIdCache.ContainsKey(pawnId))
+            {
+                return !string.IsNullOrEmpty(pawnCharacterIdCache[pawnId]);
+            }
+            
             // Check if the pawn has the legendary character comp
             var legendaryComp = pawn.GetComp<Comp_LegendaryCharacter>();
-            return legendaryComp != null && !string.IsNullOrEmpty(legendaryComp.CharacterID);
+            if (legendaryComp != null && !string.IsNullOrEmpty(legendaryComp.CharacterID))
+            {
+                pawnCharacterIdCache[pawnId] = legendaryComp.CharacterID;
+                return true;
+            }
+            
+            // Not a legendary character
+            pawnCharacterIdCache[pawnId] = null;
+            return false;
         }
         
         public static ILegendaryCharacter GetPawnLegendaryCharacter(Pawn pawn)
         {
             if (pawn == null) return null;
             
+            int pawnId = pawn.thingIDNumber;
+            
+            // Check cache first
+            if (pawnCharacterIdCache.TryGetValue(pawnId, out string characterId) && !string.IsNullOrEmpty(characterId))
+            {
+                return GetLegendaryCharacter(characterId);
+            }
+            
             // Get character ID from comp
             var legendaryComp = pawn.GetComp<Comp_LegendaryCharacter>();
             if (legendaryComp == null || string.IsNullOrEmpty(legendaryComp.CharacterID))
             {
+                pawnCharacterIdCache[pawnId] = null;
                 return null;
             }
             
+            // Update cache
+            pawnCharacterIdCache[pawnId] = legendaryComp.CharacterID;
             return GetLegendaryCharacter(legendaryComp.CharacterID);
         }
         
@@ -107,19 +148,79 @@ namespace LegendaryRacesFramework
             // Set character ID
             legendaryComp.CharacterID = character.CharacterID;
             
+            // Update cache
+            pawnCharacterIdCache[pawn.thingIDNumber] = character.CharacterID;
+            
             // Apply character traits and abilities
             character.ApplyToCharacter(pawn);
             
             // Apply name
-            if (!pawn.Name.ToStringFull.Contains(character.CharacterName))
+            if (pawn.Name == null || !pawn.Name.ToStringFull.Contains(character.CharacterName))
             {
                 pawn.Name = new NameTriple(character.CharacterName, character.CharacterName, "");
+            }
+            
+            // Send notification about legendary character
+            Messages.Message(
+                $"{pawn.LabelCap} is {character.CharacterName}, a legendary {character.RaceID} character.",
+                pawn,
+                MessageTypeDefOf.PositiveEvent);
+        }
+        
+        public static Pawn GenerateLegendaryCharacter(ILegendaryCharacter character, Faction faction = null)
+        {
+            if (character == null)
+                return null;
+                
+            try
+            {
+                // Create a request for a legendary character
+                PawnGenerationRequest request = new PawnGenerationRequest(
+                    kind: PawnKindDefOf.Colonist,
+                    faction: faction,
+                    context: PawnGenerationContext.NonPlayer,
+                    fixedBiologicalAge: CalculateAge(character.BirthTicks),
+                    fixedChronologicalAge: CalculateAge(character.BirthTicks),
+                    forceGenerateNewPawn: true,
+                    allowDead: false,
+                    allowDowned: false,
+                    canGeneratePawnRelations: false,
+                    mustBeCapableOfViolence: true
+                );
+                
+                // Generate the pawn
+                Pawn pawn = PawnGenerator.GeneratePawn(request);
+                if (pawn != null)
+                {
+                    // Apply legendary character properties
+                    ApplyLegendaryCharacterToPawn(pawn, character);
+                }
+                
+                return pawn;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error generating legendary character {character.CharacterName}: {ex}");
+                return null;
             }
         }
         
         private static ILegendaryCharacter CreateLegendaryCharacter(LegendaryCharacterDef charDef)
         {
             return new DefaultLegendaryCharacter(charDef);
+        }
+        
+        private static float CalculateAge(long birthTicks)
+        {
+            long currentTicks = Find.TickManager.TicksAbs;
+            long ageTicks = currentTicks - birthTicks;
+            return (float)ageTicks / GenDate.TicksPerYear;
+        }
+        
+        // Clear caches - call this when needed, such as on game load
+        public static void ClearCaches()
+        {
+            pawnCharacterIdCache.Clear();
         }
         
         // DefaultLegendaryCharacter implementation
@@ -307,14 +408,42 @@ namespace LegendaryRacesFramework
                         {
                             // Enhanced stats would be applied through a hediff or comp
                             // For now, we'll log that these would be applied
-                            Log.Message($"Applying enhanced mechanics for {CharacterName}: {mechanicEntry.enhancementDescription}");
+                            if (LegendaryRacesFrameworkMod.Settings.showDebugLogs)
+                            {
+                                Log.Message($"Applying enhanced mechanics for {CharacterName}: {mechanicEntry.enhancementDescription}");
+                            }
+                            
+                            // Create a special hediff for legendary character that applies the stat modifications
+                            HediffDef legendaryStatHediffDef = DefDatabase<HediffDef>.GetNamed("LegendaryCharacterStatBonus", false);
+                            if (legendaryStatHediffDef != null)
+                            {
+                                Hediff hediff = HediffMaker.MakeHediff(legendaryStatHediffDef, pawn);
+                                pawn.health.AddHediff(hediff);
+                            }
                         }
+                    }
+                }
+                
+                // Apply race gene if relevant
+                LegendaryRaceDef raceDef = DefDatabase<LegendaryRaceDef>.GetNamed(RaceID, false);
+                if (raceDef != null && ModsConfig.BiotechActive && pawn.genes != null)
+                {
+                    GeneDef coreGeneDef = raceDef.raceProperties?.coreGeneDef;
+                    if (coreGeneDef != null && !pawn.genes.HasGene(coreGeneDef))
+                    {
+                        pawn.genes.AddGene(coreGeneDef, true);
                     }
                 }
             }
             
             public ScenarioDef GetStartingScenario()
             {
+                // Try to find a scenario associated with this character
+                if (!string.IsNullOrEmpty(charDef.originScenario?.scenarioID))
+                {
+                    return DefDatabase<ScenarioDef>.GetNamed(charDef.originScenario.scenarioID, false);
+                }
+                
                 // This would return a custom scenario if defined
                 // For now, return null to use default scenario
                 return null;

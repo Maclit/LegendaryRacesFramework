@@ -1,18 +1,30 @@
+// File path: Source/LegendaryRacesFramework/Core/Systems/DefaultAbility.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using UnityEngine;
+using System;
 
 namespace LegendaryRacesFramework
 {
     public class DefaultAbility : ISpecialAbility
     {
         private readonly RaceAbilityDef abilityDef;
-        private readonly Dictionary<Pawn, int> cooldowns = new Dictionary<Pawn, int>();
+        private readonly Dictionary<int, int> cooldowns = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> lastUsedTicks = new Dictionary<int, int>();
+        
+        private IPerformanceMonitor performanceMonitor;
         
         public DefaultAbility(RaceAbilityDef abilityDef)
         {
             this.abilityDef = abilityDef;
+            
+            // Set up performance monitoring
+            if (LegendaryRacesFrameworkMod.Settings.enablePerformanceMonitoring)
+            {
+                performanceMonitor = new DefaultPerformanceMonitor(abilityDef.abilityID, null);
+            }
             
             // Register for game tick to update cooldowns
             LRF_GameComponent.RegisterForTick(OnTick);
@@ -29,6 +41,8 @@ namespace LegendaryRacesFramework
         public int CooldownTicks => abilityDef.cooldownTicks;
         
         public bool IsPassive => abilityDef.isPassive;
+        
+        public TargetingType TargetingType => ParseTargetingType(abilityDef.targetingType);
         
         public Dictionary<string, float> ResourceCosts
         {
@@ -62,36 +76,61 @@ namespace LegendaryRacesFramework
             }
         }
         
+        private TargetingType ParseTargetingType(string targetingTypeStr)
+        {
+            if (string.IsNullOrEmpty(targetingTypeStr))
+                return TargetingType.Self;
+                
+            switch (targetingTypeStr.ToLowerInvariant())
+            {
+                case "self":
+                    return TargetingType.Self;
+                case "singletarget":
+                    return TargetingType.SingleTarget;
+                case "multitarget":
+                    return TargetingType.MultiTarget;
+                case "aoe":
+                    return TargetingType.AoE;
+                default:
+                    return TargetingType.Self;
+            }
+        }
+        
         private void OnTick()
         {
             // Update cooldowns
-            foreach (var pawn in cooldowns.Keys.ToList())
+            foreach (var pawnId in cooldowns.Keys.ToList())
             {
-                if (pawn == null || pawn.Destroyed || pawn.Dead)
-                {
-                    cooldowns.Remove(pawn);
-                    continue;
-                }
-                
-                int currentCooldown = cooldowns[pawn];
+                int currentCooldown = cooldowns[pawnId];
                 if (currentCooldown > 0)
                 {
-                    cooldowns[pawn] = currentCooldown - 1;
+                    cooldowns[pawnId] = currentCooldown - 1;
                 }
             }
             
             // Handle passive abilities
             if (IsPassive)
             {
-                foreach (Pawn pawn in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
+                int currentTick = Find.TickManager.TicksGame;
+                
+                foreach (Map map in Find.Maps)
                 {
-                    // Check if pawn can use this ability
-                    if (CanUseAbility(pawn))
+                    foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
                     {
-                        // For passive abilities, only try to use if not on cooldown
-                        if (GetCurrentCooldown(pawn) <= 0)
+                        // Skip if we've already handled this pawn recently
+                        if (lastUsedTicks.TryGetValue(pawn.thingIDNumber, out int lastUsed) && 
+                            currentTick - lastUsed < 250) // Only check every 250 ticks for passive abilities
+                            continue;
+                            
+                        // Check if pawn can use this ability
+                        if (CanUseAbility(pawn))
                         {
-                            UseAbility(pawn, pawn);
+                            // For passive abilities, only try to use if not on cooldown
+                            if (GetCurrentCooldown(pawn) <= 0)
+                            {
+                                UseAbility(pawn, pawn);
+                                lastUsedTicks[pawn.thingIDNumber] = currentTick;
+                            }
                         }
                     }
                 }
@@ -103,46 +142,63 @@ namespace LegendaryRacesFramework
             if (pawn == null || pawn.Dead || pawn.Downed)
                 return false;
             
-            // Check if pawn is of the correct race
-            var raceComp = pawn.GetComp<Comp_LegendaryRace>();
-            if (raceComp == null || raceComp.RaceHandler == null)
-                return false;
-            
-            // Check if pawn is in a life stage that can use abilities
-            var lifeCycle = raceComp.RaceHandler.LifeCycleManager;
-            var lifeStage = lifeCycle?.GetCurrentLifeStage(pawn);
-            if (lifeStage == null || !lifeStage.AbilitiesUnlocked)
-                return false;
-            
-            // Check cooldown
-            if (GetCurrentCooldown(pawn) > 0)
-                return false;
-            
-            // Check stat requirements
-            foreach (var requirement in StatRequirements)
+            // Start timing for performance monitoring
+            if (performanceMonitor != null)
             {
-                float statValue = pawn.GetStatValue(requirement.Key);
-                if (statValue < requirement.Value)
-                {
-                    return false;
-                }
+                performanceMonitor.StartTiming("CanUseAbility");
             }
             
-            // Check resource costs
-            var resourceManager = raceComp.RaceHandler.ResourceManager;
-            if (resourceManager != null)
+            try
             {
-                foreach (var cost in ResourceCosts)
+                // Check if pawn is of the correct race
+                var raceComp = pawn.GetComp<Comp_LegendaryRace>();
+                if (raceComp == null || raceComp.RaceHandler == null)
+                    return false;
+                
+                // Check if pawn is in a life stage that can use abilities
+                var lifeCycle = raceComp.RaceHandler.LifeCycleManager;
+                var lifeStage = lifeCycle?.GetCurrentLifeStage(pawn);
+                if (lifeStage == null || !lifeStage.AbilitiesUnlocked)
+                    return false;
+                
+                // Check cooldown
+                if (GetCurrentCooldown(pawn) > 0)
+                    return false;
+                
+                // Check stat requirements
+                foreach (var requirement in StatRequirements)
                 {
-                    float resourceValue = resourceManager.GetResourceValue(pawn, cost.Key);
-                    if (resourceValue < cost.Value)
+                    float statValue = pawn.GetStatValue(requirement.Key);
+                    if (statValue < requirement.Value)
                     {
                         return false;
                     }
                 }
+                
+                // Check resource costs
+                var resourceManager = raceComp.RaceHandler.ResourceManager;
+                if (resourceManager != null)
+                {
+                    foreach (var cost in ResourceCosts)
+                    {
+                        float resourceValue = resourceManager.GetResourceValue(pawn, cost.Key);
+                        if (resourceValue < cost.Value)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                
+                return true;
             }
-            
-            return true;
+            finally
+            {
+                // Stop timing for performance monitoring
+                if (performanceMonitor != null)
+                {
+                    performanceMonitor.StopTiming("CanUseAbility");
+                }
+            }
         }
         
         public bool UseAbility(Pawn pawn, LocalTargetInfo target)
@@ -150,26 +206,49 @@ namespace LegendaryRacesFramework
             if (!CanUseAbility(pawn))
                 return false;
             
-            // Get race resource manager
-            var raceComp = pawn.GetComp<Comp_LegendaryRace>();
-            var resourceManager = raceComp?.RaceHandler?.ResourceManager;
-            
-            // Consume resources
-            if (resourceManager != null)
+            // Start timing for performance monitoring
+            if (performanceMonitor != null)
             {
-                foreach (var cost in ResourceCosts)
-                {
-                    resourceManager.AdjustResourceValue(pawn, cost.Key, -cost.Value);
-                }
+                performanceMonitor.StartTiming("UseAbility");
             }
             
-            // Apply ability effects
-            ApplyAbilityEffects(pawn, target);
-            
-            // Set cooldown
-            cooldowns[pawn] = CooldownTicks;
-            
-            return true;
+            try
+            {
+                // Get race resource manager
+                var raceComp = pawn.GetComp<Comp_LegendaryRace>();
+                var resourceManager = raceComp?.RaceHandler?.ResourceManager;
+                
+                // Consume resources
+                if (resourceManager != null)
+                {
+                    foreach (var cost in ResourceCosts)
+                    {
+                        resourceManager.AdjustResourceValue(pawn, cost.Key, -cost.Value);
+                    }
+                }
+                
+                // Apply ability effects
+                ApplyAbilityEffects(pawn, target);
+                
+                // Set cooldown
+                cooldowns[pawn.thingIDNumber] = CooldownTicks;
+                
+                // Record usage for balance metrics
+                if (raceComp?.RaceHandler?.BalanceMetrics != null)
+                {
+                    raceComp.RaceHandler.BalanceMetrics.RecordMetric("AbilityUses", 1);
+                }
+                
+                return true;
+            }
+            finally
+            {
+                // Stop timing for performance monitoring
+                if (performanceMonitor != null)
+                {
+                    performanceMonitor.StopTiming("UseAbility");
+                }
+            }
         }
         
         public int GetCurrentCooldown(Pawn pawn)
@@ -177,7 +256,9 @@ namespace LegendaryRacesFramework
             if (pawn == null)
                 return 0;
             
-            if (cooldowns.TryGetValue(pawn, out int cooldown))
+            int pawnId = pawn.thingIDNumber;
+            
+            if (cooldowns.TryGetValue(pawnId, out int cooldown))
             {
                 return cooldown;
             }
@@ -193,21 +274,21 @@ namespace LegendaryRacesFramework
                 // Determine targets based on targeting type
                 List<Pawn> targets = new List<Pawn>();
                 
-                switch (abilityDef.targetingType?.ToLowerInvariant())
+                switch (TargetingType)
                 {
-                    case "singletarget":
+                    case TargetingType.Self:
+                        targets.Add(pawn);
+                        break;
+                        
+                    case TargetingType.SingleTarget:
                         if (target.Thing is Pawn targetPawn)
                         {
                             targets.Add(targetPawn);
                         }
                         break;
                         
-                    case "self":
-                        targets.Add(pawn);
-                        break;
-                        
-                    case "multitarget":
-                    case "aoe":
+                    case TargetingType.MultiTarget:
+                    case TargetingType.AoE:
                         if (abilityDef.effectRadius > 0f && target.Cell.IsValid && pawn.Map != null)
                         {
                             IEnumerable<Thing> thingsInRange = GenRadial.RadialDistinctThingsAround(
@@ -222,10 +303,6 @@ namespace LegendaryRacesFramework
                             }
                         }
                         break;
-                        
-                    default:
-                        targets.Add(pawn); // Default to self
-                        break;
                 }
                 
                 // Apply hediffs to targets
@@ -233,13 +310,51 @@ namespace LegendaryRacesFramework
                 {
                     foreach (HediffDef hediffDef in abilityDef.hediffsApplied)
                     {
-                        Hediff hediff = HediffMaker.MakeHediff(hediffDef, targetPawn);
-                        targetPawn.health.AddHediff(hediff);
+                        Hediff existingHediff = targetPawn.health.hediffSet.GetFirstHediffOfDef(hediffDef);
+                        
+                        if (existingHediff != null)
+                        {
+                            // Increase severity of existing hediff
+                            existingHediff.Severity += 0.2f;
+                        }
+                        else
+                        {
+                            // Add new hediff
+                            Hediff hediff = HediffMaker.MakeHediff(hediffDef, targetPawn);
+                            hediff.Severity = 0.5f; // Start at medium severity
+                            targetPawn.health.AddHediff(hediff);
+                        }
                     }
                 }
                 
                 // Create visual effect
-                FleckMaker.ThrowLightningGlow(target.Cell.ToVector3Shifted(), pawn.Map, 1.5f);
+                if (target.Cell.IsValid && pawn.Map != null)
+                {
+                    // Effect type based on ability category (can be expanded)
+                    if (abilityDef.category == "Healing")
+                    {
+                        FleckMaker.ThrowLightningGlow(target.Cell.ToVector3Shifted(), pawn.Map, 1.5f);
+                        FleckMaker.AttachedOverlay(pawn, ThingDefOf.Mote_HealingCross, Vector3.zero);
+                    }
+                    else if (abilityDef.category == "Damage")
+                    {
+                        FleckMaker.Static(target.Cell.ToVector3Shifted(), pawn.Map, FleckDefOf.ExplosionFlash);
+                    }
+                    else
+                    {
+                        FleckMaker.ThrowDustPuff(target.Cell.ToVector3Shifted(), pawn.Map, 2f);
+                    }
+                }
+                
+                // Play sound if specified
+                if (!string.IsNullOrEmpty(abilityDef.soundDefName))
+                {
+                    SoundDef soundDef = DefDatabase<SoundDef>.GetNamed(abilityDef.soundDefName, false);
+                    if (soundDef != null)
+                    {
+                        soundDef.PlayOneShot(new TargetInfo(target.Cell, pawn.Map));
+                    }
+                }
             }
         }
     }

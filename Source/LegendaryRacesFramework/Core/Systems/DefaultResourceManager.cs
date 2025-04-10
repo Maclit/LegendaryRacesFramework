@@ -1,7 +1,9 @@
+// File path: Source/LegendaryRacesFramework/Core/Systems/DefaultResourceManager.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using UnityEngine;
 
 namespace LegendaryRacesFramework
 {
@@ -9,7 +11,13 @@ namespace LegendaryRacesFramework
     {
         private readonly string raceID;
         private readonly List<RaceResource> resources = new List<RaceResource>();
-        private readonly Dictionary<Pawn, Dictionary<string, float>> pawnResourceValues = new Dictionary<Pawn, Dictionary<string, float>>();
+        private readonly Dictionary<int, Dictionary<string, float>> pawnResourceValues = new Dictionary<int, Dictionary<string, float>>();
+        
+        // Track which ticks resources were last updated
+        private readonly Dictionary<int, int> lastUpdateTicks = new Dictionary<int, int>();
+        
+        // Performance optimizations for RimWorld 1.5
+        private int resourceUpdateInterval = 250; // Default, will be overridden by settings
         
         public string RaceID => raceID;
         
@@ -18,6 +26,13 @@ namespace LegendaryRacesFramework
         public DefaultResourceManager(string raceID, List<RaceResourceDef> resourceDefs)
         {
             this.raceID = raceID;
+            
+            // Get update interval from settings if available
+            var raceDef = DefDatabase<LegendaryRaceDef>.GetNamed(raceID, false);
+            if (raceDef?.performanceSettings != null)
+            {
+                resourceUpdateInterval = Mathf.Max(1, raceDef.performanceSettings.resourceUpdateInterval);
+            }
             
             // Convert resource defs to runtime resources
             if (resourceDefs != null)
@@ -39,7 +54,7 @@ namespace LegendaryRacesFramework
                         ResourceLevelHediffs = resourceDef.resourceLevelHediffs?.ToDictionary(
                             x => x.level,
                             x => x.hediff
-                        )
+                        ) ?? new Dictionary<float, HediffDef>()
                     };
                     
                     RegisterResource(resource);
@@ -52,15 +67,31 @@ namespace LegendaryRacesFramework
         
         private void OnTick()
         {
-            // Update resources periodically
-            foreach (var pawnResources in pawnResourceValues.ToList())
+            int currentTick = Find.TickManager.TicksGame;
+            
+            // Process pawns with resources
+            foreach (var pawnEntry in pawnResourceValues.ToList())
             {
-                Pawn pawn = pawnResources.Key;
+                int pawnID = pawnEntry.Key;
+                
+                // Skip if not time to update yet
+                if (lastUpdateTicks.TryGetValue(pawnID, out int lastUpdate) && 
+                    currentTick - lastUpdate < resourceUpdateInterval)
+                {
+                    continue;
+                }
+                
+                // Update last update time
+                lastUpdateTicks[pawnID] = currentTick;
+                
+                // Find pawn by ID
+                Pawn pawn = FindPawnByID(pawnID);
                 
                 // Skip if pawn is no longer valid
                 if (pawn == null || pawn.Destroyed || pawn.Dead)
                 {
-                    pawnResourceValues.Remove(pawn);
+                    pawnResourceValues.Remove(pawnID);
+                    lastUpdateTicks.Remove(pawnID);
                     continue;
                 }
                 
@@ -69,11 +100,11 @@ namespace LegendaryRacesFramework
                 {
                     if (resource.RegenerationRate != 0f)
                     {
-                        // Convert from per-day rate to per-tick
-                        float regenPerTick = resource.RegenerationRate / GenDate.TicksPerDay;
+                        // Convert from per-day rate to per-update
+                        float regenPerUpdate = resource.RegenerationRate / GenDate.TicksPerDay * resourceUpdateInterval;
                         
                         // Apply regeneration
-                        AdjustResourceValue(pawn, resource.ResourceID, regenPerTick);
+                        AdjustResourceValue(pawn, resource.ResourceID, regenPerUpdate);
                     }
                     
                     // Update hediffs based on resource level
@@ -81,6 +112,24 @@ namespace LegendaryRacesFramework
                     UpdateResourceHediffs(pawn, resource, resourceValue);
                 }
             }
+        }
+        
+        private Pawn FindPawnByID(int pawnID)
+        {
+            // Find pawn by ID in maps
+            foreach (Map map in Find.Maps)
+            {
+                Pawn pawn = map.mapPawns.AllPawns.FirstOrDefault(p => p.thingIDNumber == pawnID);
+                if (pawn != null)
+                    return pawn;
+            }
+            
+            // Find pawn by ID in world pawns
+            Pawn worldPawn = Find.WorldPawns.AllWorldPawns.FirstOrDefault(p => p.thingIDNumber == pawnID);
+            if (worldPawn != null)
+                return worldPawn;
+            
+            return null;
         }
         
         private void UpdateResourceHediffs(Pawn pawn, RaceResource resource, float resourceValue)
@@ -143,11 +192,13 @@ namespace LegendaryRacesFramework
             if (pawn == null || string.IsNullOrEmpty(resourceDefName))
                 return 0f;
             
+            int pawnID = pawn.thingIDNumber;
+            
             // Initialize resource values for this pawn if not already done
-            if (!pawnResourceValues.TryGetValue(pawn, out Dictionary<string, float> pawnResources))
+            if (!pawnResourceValues.TryGetValue(pawnID, out Dictionary<string, float> pawnResources))
             {
                 pawnResources = new Dictionary<string, float>();
-                pawnResourceValues.Add(pawn, pawnResources);
+                pawnResourceValues.Add(pawnID, pawnResources);
             }
             
             // Find the resource
@@ -170,6 +221,8 @@ namespace LegendaryRacesFramework
             if (pawn == null || string.IsNullOrEmpty(resourceDefName))
                 return;
             
+            int pawnID = pawn.thingIDNumber;
+            
             // Find the resource
             RaceResource resource = resources.FirstOrDefault(r => r.ResourceID == resourceDefName);
             if (resource == null)
@@ -179,10 +232,11 @@ namespace LegendaryRacesFramework
             value = Mathf.Clamp(value, resource.MinValue, resource.MaxValue);
             
             // Initialize resource values for this pawn if not already done
-            if (!pawnResourceValues.TryGetValue(pawn, out Dictionary<string, float> pawnResources))
+            if (!pawnResourceValues.TryGetValue(pawnID, out Dictionary<string, float> pawnResources))
             {
                 pawnResources = new Dictionary<string, float>();
-                pawnResourceValues.Add(pawn, pawnResources);
+                pawnResourceValues.Add(pawnID, pawnResources);
+                lastUpdateTicks[pawnID] = Find.TickManager.TicksGame;
             }
             
             // Set resource value
@@ -190,6 +244,25 @@ namespace LegendaryRacesFramework
             
             // Update hediffs based on new value
             UpdateResourceHediffs(pawn, resource, value);
+            
+            // Send notification if resource is at min/max
+            if (resource.IsVisible && pawn.Faction != null && pawn.Faction.IsPlayer)
+            {
+                if (Mathf.Approximately(value, resource.MinValue))
+                {
+                    Messages.Message(
+                        string.Format("LRF.ResourceDepleted".Translate(), pawn.LabelCap, resource.ResourceName),
+                        pawn,
+                        MessageTypeDefOf.NegativeEvent);
+                }
+                else if (Mathf.Approximately(value, resource.MaxValue))
+                {
+                    Messages.Message(
+                        string.Format("LRF.ResourceFilled".Translate(), pawn.LabelCap, resource.ResourceName),
+                        pawn,
+                        MessageTypeDefOf.PositiveEvent);
+                }
+            }
         }
         
         public void AdjustResourceValue(Pawn pawn, string resourceDefName, float delta)

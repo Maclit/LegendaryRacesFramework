@@ -1,3 +1,18 @@
-# LRF_Keys.xml
-
-Placeholder file for the Languages\English\Keyed directory.
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Framework-related strings -->
+  <LRF.RaceSettings>Race Settings</LRF.RaceSettings>
+  <LRF.ResourceSettings>Resource Settings</LRF.ResourceSettings>
+  <LRF.AbilitySettings>Ability Settings</LRF.AbilitySettings>
+  
+  <!-- UI strings -->
+  <LRF.LegendaryCharacter>Legendary Character</LRF.LegendaryCharacter>
+  <LRF.RaceAbilities>Race Abilities</LRF.RaceAbilities>
+  <LRF.RaceResources>Race Resources</LRF.RaceResources>
+  
+  <!-- Message strings -->
+  <LRF.LifeStageTransition>{0} has entered the {1} stage of life.</LRF.LifeStageTransition>
+  <LRF.AbilityActivated>{0} has activated {1}.</LRF.AbilityActivated>
+  <LRF.ResourceDepleted>{0}'s {1} has been depleted.</LRF.ResourceDepleted>
+  <LRF.ResourceFilled>{0}'s {1} has been filled.</LRF.ResourceFilled>
+</LanguageData>

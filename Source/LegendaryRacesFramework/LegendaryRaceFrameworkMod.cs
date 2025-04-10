@@ -1,9 +1,11 @@
+// File path: Source/LegendaryRacesFramework/LegendaryRacesFrameworkMod.cs
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using RimWorld;
 using Verse;
+using UnityEngine;
 
 namespace LegendaryRacesFramework
 {
@@ -12,13 +14,18 @@ namespace LegendaryRacesFramework
         private static Dictionary<string, Type> registeredRaceExtensions = new Dictionary<string, Type>();
         private static Dictionary<string, Type> registeredAbilityTypes = new Dictionary<string, Type>();
         
+        public static LegendaryRacesFrameworkSettings Settings { get; private set; }
+        
         private static Harmony harmony;
         public static LegendaryRacesFrameworkMod Instance { get; private set; }
         
         public LegendaryRacesFrameworkMod(ModContentPack content) : base(content)
         {
             Instance = this;
-            harmony = new Harmony("LegendaryRacesFramework");
+            harmony = new Harmony("JulienCastillejos.LegendaryRacesFramework");
+            
+            // Initialize settings
+            Settings = GetSettings<LegendaryRacesFrameworkSettings>();
             
             // Apply patches
             harmony.PatchAll(Assembly.GetExecutingAssembly());
@@ -42,6 +49,18 @@ namespace LegendaryRacesFramework
             CheckOptionalModIntegrations();
             
             Log.Message("Legendary Races Framework initialized successfully!");
+        }
+        
+        // Add settings handling for RimWorld 1.5
+        public override string SettingsCategory()
+        {
+            return "Legendary Races Framework";
+        }
+        
+        public override void DoSettingsWindowContents(Rect inRect)
+        {
+            Settings.DoWindowContents(inRect);
+            base.DoSettingsWindowContents(inRect);
         }
         
         private void RegisterCompProperties()
@@ -144,6 +163,39 @@ namespace LegendaryRacesFramework
                 return null;
             
             return abilityType;
+        }
+    }
+    
+    public class LegendaryRacesFrameworkSettings : ModSettings
+    {
+        // Framework-wide settings
+        public bool enablePerformanceMonitoring = true;
+        public bool showDebugLogs = false;
+        public bool enableBalancingTools = true;
+        
+        public override void ExposeData()
+        {
+            base.ExposeData();
+            Scribe_Values.Look(ref enablePerformanceMonitoring, "enablePerformanceMonitoring", true);
+            Scribe_Values.Look(ref showDebugLogs, "showDebugLogs", false);
+            Scribe_Values.Look(ref enableBalancingTools, "enableBalancingTools", true);
+        }
+        
+        public void DoWindowContents(Rect inRect)
+        {
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(inRect);
+            
+            listing.CheckboxLabeled("Enable performance monitoring", ref enablePerformanceMonitoring, 
+                "Monitors performance of race mechanics to detect potential issues");
+            
+            listing.CheckboxLabeled("Show debug logs", ref showDebugLogs,
+                "Shows additional debug information in the log");
+            
+            listing.CheckboxLabeled("Enable balancing tools", ref enableBalancingTools,
+                "Enables tools for balancing race mechanics");
+            
+            listing.End();
         }
     }
 }

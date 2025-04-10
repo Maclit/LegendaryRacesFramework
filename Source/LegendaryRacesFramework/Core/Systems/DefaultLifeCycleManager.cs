@@ -1,7 +1,9 @@
+// File path: Source/LegendaryRacesFramework/Core/Systems/DefaultLifeCycleManager.cs
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using UnityEngine;
 
 namespace LegendaryRacesFramework
 {
@@ -10,7 +12,11 @@ namespace LegendaryRacesFramework
         private readonly string raceID;
         private readonly RaceProperties raceProperties;
         private readonly List<RaceLifeStage> lifeStages = new List<RaceLifeStage>();
-        private readonly Dictionary<Pawn, string> currentLifeStages = new Dictionary<Pawn, string>();
+        private readonly Dictionary<int, string> currentLifeStages = new Dictionary<int, string>();
+        
+        // Performance optimization for RimWorld 1.5
+        private int lastCheckTick = 0;
+        private const int CHECK_INTERVAL_TICKS = GenDate.TicksPerDay; // Check once per day
         
         public string RaceID => raceID;
         
@@ -60,12 +66,38 @@ namespace LegendaryRacesFramework
         
         private void OnTick()
         {
-            // Check for life stage transitions periodically (once per day)
-            if (Find.TickManager.TicksGame % GenDate.TicksPerDay != 0)
-                return;
+            int currentTick = Find.TickManager.TicksGame;
             
-            // Cache pawns that need their life stage tracked
-            foreach (Pawn pawn in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists)
+            // Only check periodically for performance
+            if (currentTick - lastCheckTick < CHECK_INTERVAL_TICKS)
+                return;
+                
+            lastCheckTick = currentTick;
+            
+            // Update for RimWorld 1.5 pawn handling
+            List<Pawn> pawnsToCheck = new List<Pawn>();
+            
+            // Add player colony pawns
+            foreach (Map map in Find.Maps)
+            {
+                pawnsToCheck.AddRange(map.mapPawns.FreeColonistsSpawned);
+            }
+            
+            // Add caravan pawns
+            foreach (Caravan caravan in Find.WorldObjects.Caravans)
+            {
+                if (caravan.IsPlayerControlled)
+                {
+                    pawnsToCheck.AddRange(caravan.PawnsListForReading.Where(p => p.IsFreeColonist));
+                }
+            }
+            
+            // Add player-faction world pawns if any
+            pawnsToCheck.AddRange(Find.WorldPawns.AllWorldPawns.Where(p => 
+                p.Faction != null && p.Faction.IsPlayer && p.IsFreeColonist));
+            
+            // Process each pawn
+            foreach (Pawn pawn in pawnsToCheck)
             {
                 // Skip if pawn is not of this race
                 if (!IsRaceMember(pawn))
@@ -75,9 +107,10 @@ namespace LegendaryRacesFramework
                 if (currentStage == null)
                     continue;
                 
-                // Store current stage ID
+                // Store current stage ID using pawn ID
+                int pawnID = pawn.thingIDNumber;
                 string previousStageID = null;
-                currentLifeStages.TryGetValue(pawn, out previousStageID);
+                currentLifeStages.TryGetValue(pawnID, out previousStageID);
                 
                 // Check for life stage transition
                 if (previousStageID != currentStage.StageID)
@@ -92,7 +125,7 @@ namespace LegendaryRacesFramework
                     HandleLifeStageTransition(pawn, previousStage, currentStage);
                     
                     // Update stored stage
-                    currentLifeStages[pawn] = currentStage.StageID;
+                    currentLifeStages[pawnID] = currentStage.StageID;
                 }
             }
         }
@@ -167,8 +200,10 @@ namespace LegendaryRacesFramework
             // Send notification of life stage transition
             if (pawn.Faction != null && pawn.Faction.IsPlayer && fromStage != null)
             {
-                Messages.Message($"{pawn.Name} has entered the {toStage.StageName} stage of life.", 
-                    pawn, MessageTypeDefOf.PositiveEvent);
+                Messages.Message(
+                    string.Format("LRF.LifeStageTransition".Translate(), pawn.LabelCap, toStage.StageName),
+                    pawn, 
+                    MessageTypeDefOf.PositiveEvent);
             }
             
             // Remove hediffs from previous stage
@@ -186,6 +221,10 @@ namespace LegendaryRacesFramework
             
             // Apply hediffs for new stage
             ApplyLifeStageHediffs(pawn, toStage);
+            
+            // Apply stat changes - in RimWorld 1.5 we need to trigger recache
+            pawn.health.capacities.Notify_CapacityLevelsDirty();
+            pawn.needs.AddOrRemoveNeedsAsAppropriate();
         }
         
         public void ApplyLifeStageHediffs(Pawn pawn, RaceLifeStage lifeStage)
