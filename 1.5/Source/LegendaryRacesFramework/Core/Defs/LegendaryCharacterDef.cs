@@ -36,6 +36,8 @@ namespace LegendaryRacesFramework
         
         // Relationships
         public List<SpecialRelationshipDef> specialRelationships;
+
+        public bool Abstract;
         
         public override void ResolveReferences()
         {

@@ -4,6 +4,7 @@ using RimWorld;
 using Verse;
 using UnityEngine;
 using System;
+using Verse.Sound;
 
 namespace LegendaryRacesFramework
 {
@@ -41,6 +42,7 @@ namespace LegendaryRacesFramework
         
         public bool IsPassive => abilityDef.isPassive;
         
+        // Implement the TargetingType property required by the interface
         public TargetingType TargetingType => ParseTargetingType(abilityDef.targetingType);
         
         public Dictionary<string, float> ResourceCosts
@@ -333,7 +335,7 @@ namespace LegendaryRacesFramework
                     if (abilityDef.category == "Healing")
                     {
                         FleckMaker.ThrowLightningGlow(target.Cell.ToVector3Shifted(), pawn.Map, 1.5f);
-                        FleckMaker.AttachedOverlay(pawn, ThingDefOf.Mote_HealingCross, Vector3.zero);
+                        FleckMaker.AttachedOverlay(pawn, FleckDefOf.HealingCross, Vector3.zero);
                     }
                     else if (abilityDef.category == "Damage")
                     {
@@ -351,7 +353,7 @@ namespace LegendaryRacesFramework
                     SoundDef soundDef = DefDatabase<SoundDef>.GetNamed(abilityDef.soundDefName, false);
                     if (soundDef != null)
                     {
-                        soundDef.PlayOneShot(new TargetInfo(target.Cell, pawn.Map));
+                        soundDef.PlayOneShot(SoundInfo.InMap(new TargetInfo(target.Cell, pawn.Map)));
                     }
                 }
             }

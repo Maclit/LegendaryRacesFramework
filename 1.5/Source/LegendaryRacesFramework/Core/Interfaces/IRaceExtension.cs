@@ -176,6 +176,11 @@ namespace LegendaryRacesFramework
         bool IsPassive { get; }
 
         /// <summary>
+        /// Gets the targeting type for this ability.
+        /// </summary>
+        TargetingType TargetingType { get; }
+
+        /// <summary>
         /// Gets the resource costs for activating this ability.
         /// </summary>
         Dictionary<string, float> ResourceCosts { get; }

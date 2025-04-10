@@ -64,9 +64,12 @@ namespace LegendaryRacesFramework
         
         private void RegisterCompProperties()
         {
-            // Register comp properties for use in XML
-            DefGenerator.AddImpliedDef(new CompProperties_LegendaryRace());
-            DefGenerator.AddImpliedDef(new CompProperties_LegendaryCharacter());
+            var legendaryRaceProps = new CompProperties_LegendaryRace();
+            var legendaryCharacterProps = new CompProperties_LegendaryCharacter();
+
+            // Register the CompProperties properly
+            DefGenerator.AddImpliedDef<CompProperties>(legendaryRaceProps);
+            DefGenerator.AddImpliedDef<CompProperties>(legendaryCharacterProps);
         }
         
         private void RegisterDefaultImplementations()

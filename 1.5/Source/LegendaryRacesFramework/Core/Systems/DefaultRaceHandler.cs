@@ -174,7 +174,7 @@ namespace LegendaryRacesFramework
                 // Check for core gene
                 if (ModsConfig.BiotechActive && pawn.genes != null && CoreGeneDef != null)
                 {
-                    if (pawn.genes.HasGene(CoreGeneDef))
+                    if (pawn.genes.HasActiveGene(CoreGeneDef))
                     {
                         raceMembershipCache[pawnID] = true;
                         return true;
@@ -277,10 +277,10 @@ namespace LegendaryRacesFramework
                         return pawn.Position.GetTerrain(pawn.Map)?.defName?.ToLowerInvariant().Contains("water") ?? false;
                         
                     case "darkness":
-                        return pawn.Map.glowGrid.GameGlowAt(pawn.Position) < 0.5f;
+                        return pawn.Map.glowGrid.GroundGlowAt(pawn.Position) < 0.5f;
                         
                     case "light":
-                        return pawn.Map.glowGrid.GameGlowAt(pawn.Position) > 0.5f;
+                        return pawn.Map.glowGrid.GroundGlowAt(pawn.Position) > 0.5f;
                         
                     case "indoors":
                         return pawn.GetRoom()?.PsychologicallyOutdoors == false;

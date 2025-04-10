@@ -428,7 +428,7 @@ namespace LegendaryRacesFramework
                 if (raceDef != null && ModsConfig.BiotechActive && pawn.genes != null)
                 {
                     GeneDef coreGeneDef = raceDef.raceProperties?.coreGeneDef;
-                    if (coreGeneDef != null && !pawn.genes.HasGene(coreGeneDef))
+                    if (coreGeneDef != null && !pawn.genes.HasActiveGene(coreGeneDef))
                     {
                         pawn.genes.AddGene(coreGeneDef, true);
                     }

@@ -36,7 +36,9 @@ namespace LegendaryRacesFramework
         
         // Cached race handler instance
         private IRaceExtension raceHandler;
-        
+
+        public bool Abstract;
+
         // Get the race handler instance
         public IRaceExtension GetRaceHandler()
         {
